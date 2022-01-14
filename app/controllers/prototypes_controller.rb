@@ -1,6 +1,8 @@
 class PrototypesController < ApplicationController
+  before_action :authenticate_user!, only: [:new, :create, :edit, :update, :destroy]
+
   def index
-    @prototype = Prototype.all
+    @prototypes = Prototype.all
   end
 
   def new
@@ -9,6 +11,8 @@ class PrototypesController < ApplicationController
 
   def show
     @prototype = Prototype.find(params[:id])  # あとで1つまとめること
+    @comment = Comment.new
+    @comments = @prototype.comments.includes(:user)
   end
 
   def create
@@ -22,10 +26,13 @@ class PrototypesController < ApplicationController
 
   def edit
     @prototype = Prototype.find(params[:id])  # あとで1つまとめること
+    unless user_signed_in? || current_user.id == @prototype.user_id
+      redirect_to action: :index
+    end
   end
 
   def update
-    @prototype = Prototype.find(params[:id])  # これも1つまとめられる（？）
+    @prototype = Prototype.find(params[:id])  # あとで1つまとめること
     if @prototype.update(prototype_params)
       redirect_to prototype_path(@prototype.id)
     else
@@ -36,10 +43,9 @@ class PrototypesController < ApplicationController
   def destroy
     prototype = Prototype.find(params[:id])
     if user_signed_in? && current_user.id == prototype.user_id
-      prototype = Prototype.find(params[:id])
       prototype.destroy
-      redirect_to root_path
     end
+    redirect_to root_path
   end
   private
   def prototype_params
